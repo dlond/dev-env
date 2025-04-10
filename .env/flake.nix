@@ -5,30 +5,31 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
-  outputs = {nixpkgs, ...}: let
-    system = "aarch64-darwin";
-    pkgs = import nixpkgs { inherit system; };
+  outputs = { nixpkgs, ... }:
+    let
+      system = "aarch64-darwin";
+      pkgs = import nixpkgs { inherit system; };
 
-    pythonEnv = pkgs.python313.withPackages (ps: with ps; [
-      numpy
-      pandas
-      scipy
-      matplotlib
-      ipython
-    ]);
-  in {
-    devShells.${system}.default = pkgs.mkShell {
-      buildInputs = [
-        pythonEnv
-      ];
+      python = pkgs.python313.withPackages (ps: with ps; [
+        numpy
+        pandas
+        scipy
+        matplotlib
+        ipython
+      ]);
+    in {
+      devShells.${system}.default = pkgs.mkShell {
+        buildInputs = [
+          python
+        ];
 
-      shellHook = ''
+        shellHook = ''
         export VIRTUAL_ENV=$PWD/.nix-python-env
         export PATH=$VIRTUAL_ENV/bin:$PATH
         echo "Activated Nix flake Python environment"
 
         exec zsh --rcs
-      '';
+        '';
+      };
     };
-  };
 }
