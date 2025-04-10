@@ -1,34 +1,38 @@
 {
-  description = "Python development environment using Nix flakes";
+  description = "LaTeX development environment using Nix flakes";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
-  outputs = {nixpkgs, ...}: let
-    system = "aarch64-darwin";
-    pkgs = import nixpkgs { inherit system; };
+  outputs = { nixpkgs, ... }:
+    let
+      system = "aarch64-darwin";
+      pkgs = import nixpkgs { inherit system; };
 
-    pythonEnv = pkgs.python313.withPackages (ps: with ps; [
-      numpy
-      pandas
-      scipy
-      matplotlib
-      ipython
-    ]);
-  in {
-    devShells.${system}.default = pkgs.mkShell {
-      buildInputs = [
-        pythonEnv
-      ];
+      tex = pkgs.texlive.combine {
+        inherit (pkgs.texlive)
+        scheme-small    # base LaTeX, enough for custom setup
+        latexmk         # smart PDF compiler
+        xetex           # better font and UTF-8 support
+        fontspec        # for custom fonts
+        babel           # multilingual support
+        geometry        # control page layout
+        fancyhdr        # headers and footers
+        titlesec        # section formatting
+        enumitem        # better itemize/enumerate
+        hyperref        # clickable links
+        graphicx        # includegraphics
+        xcolor;         # color support
+      };
+    in {
+      devShells.${system}.default = pkgs.mkShell {
+        packages = [ pkgs.texliveFull ];
+        shellHook = ''
+          echo "Activated LaTeX flake environment. Run: latexmk -xelatex [tex file]"
 
-      shellHook = ''
-        export VIRTUAL_ENV=$PWD/.nix-python-env
-        export PATH=$VIRTUAL_ENV/bin:$PATH
-        echo "Activated Nix flake Python environment"
-
-        exec zsh --rcs
-      '';
+          exec zsh --rcs
+          '';
+      };
     };
-  };
 }
